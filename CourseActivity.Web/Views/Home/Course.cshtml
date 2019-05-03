@@ -1,0 +1,306 @@
+﻿@model HomeViewModel
+@{
+    ViewData["Title"] = "Home Page";
+    Layout = "";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - CourseActivity.Web</title>
+
+    <environment include="Development">
+        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+    </environment>
+    <environment exclude="Development">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
+              asp-fallback-href="~/lib/bootstrap/dist/css/bootstrap.min.css"
+              asp-fallback-test-class="sr-only" asp-fallback-test-property="position" asp-fallback-test-value="absolute" />
+    </environment>
+
+    <style>
+        .itemName::first-letter {
+            text-transform: capitalize;
+        }
+
+        .colorGray {
+            background-color: #f5f5f5;
+        }
+
+        #categoryTable {
+            width: 100%;
+        }
+
+        .item {
+            border-top: 1px solid #aaa;
+            border-bottom: 1px solid #aaa;
+        }
+
+        .category {
+            border-top: 1px solid #aaa;
+            border-bottom: 2px solid #aaa;
+        }
+
+            .category > td {
+                padding: 6px;
+            }
+
+        .item > td {
+            padding: 6px;
+        }
+
+        .student > td {
+            padding: 2px;
+        }
+
+        #itemTable {
+            width: 100%;
+        }
+
+        #studentTable {
+            width: 100%;
+        }
+
+        .tableHeader {
+            font-weight: bold;
+            font-size: 15px;
+            color: #337ab7;
+            cursor: pointer;
+        }
+
+        .category {
+            font-size: 20px;
+        }
+
+            .item > td, .category > td, .student > td {
+                width: 17.5%;
+            }
+
+                .item > td:first-of-type, .category > td:first-of-type, .student > td:first-of-type {
+                    width: 30%;
+                }
+    </style>
+</head>
+<body>
+    <input id="CourseId" type="hidden" asp-for="CourseId" />
+    <div class="container body-content">
+        <div class="row">
+            <div class="col">
+                <h2>
+                    <a href="@Model.CanvasUrl/courses/@Model.CourseId">@Model.CourseName</a>
+                </h2>
+            </div>
+            <div class="col">
+                <div class="text-right form-wrapper">
+                    <a asp-action="DownloadCsv" asp-route-courseId="@Model.CourseId" class="btn btn-sm btn-primary">Download CSV</a>
+                    <a asp-action="ReloadData" asp-route-courseId="@Model.CourseId" class="btn btn-sm btn-primary">Reload Data</a>
+                </div>
+            </div>
+        </div>
+
+        <hr />
+        <div id="courseTable">
+            <table v-if="courseData.length > 0" id="categoryTable">
+                <thead>
+                    <tr>
+                        <th v-on:click="sort('name')" class="tableHeader">Name <i id="nameSortIcon" :class="{ 'glyphicon glyphicon-arrow-up' : currentSort == 'name' && currentSortDirection == 'desc', 'glyphicon glyphicon-arrow-down' : currentSort == 'name' && currentSortDirection == 'asc' }"></i></th>
+                        <th v-on:click="sort('views')" class="tableHeader">Views <i id="viewsSortIcon" :class="{ 'glyphicon glyphicon-arrow-up' : currentSort == 'views' && currentSortDirection == 'desc', 'glyphicon glyphicon-arrow-down' : currentSort == 'views' && currentSortDirection == 'asc' }"></i></th>
+                        <th v-on:click="sort('participations')" class="tableHeader">Participations <i id="participationsSortIcon" :class="{ 'glyphicon glyphicon-arrow-up' : currentSort == 'participations' && currentSortDirection == 'desc', 'glyphicon glyphicon-arrow-down' : currentSort == 'participations' && currentSortDirection == 'asc' }"></i></th>
+                        <th v-on:click="sort('firstAccess')" class="tableHeader">First Access <i id="firstAccessSortIcon" :class="{ 'glyphicon glyphicon-arrow-up' : currentSort == 'firstAccess' && currentSortDirection == 'desc', 'glyphicon glyphicon-arrow-down' : currentSort == 'firstAccess' && currentSortDirection == 'asc' }"></i></th>
+                        <th v-on:click="sort('lastAccess')" class="tableHeader">Last Access <i id="lastAccessSortIcon" :class="{ 'glyphicon glyphicon-arrow-up' : currentSort == 'lastAccess' && currentSortDirection == 'desc', 'glyphicon glyphicon-arrow-down' : currentSort == 'lastAccess' && currentSortDirection == 'asc' }"></i></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template v-for="(category, index) in sortedCourseData">
+                        <tr :class="{ 'category' : true, 'colorGray' : index % 2 == 0}" v-on:click="toggleExpand">
+                            <td><span>+</span> {{category.name | capitalize}}</td>
+                            <td>{{category.views}}</td>
+                            <td>{{category.participations}}</td>
+                            <td>{{category.firstAccess | formatDate }}</td>
+                            <td>{{category.lastAccess | formatDate }}</td>
+                        </tr>
+                        <tr style="display: none;">
+                            <td colspan="5">
+                                <table id="itemTable">
+                                        <template v-for="(item, itIndex) in category.items">
+                                            <tr :class="{ 'item' : true, 'colorGray' : itIndex % 2 == 0}" v-on:click="toggleExpand">
+                                                <td><span>+</span> {{item.name | capitalize}}</td>
+                                                <td>{{item.views}}</td>
+                                                <td>{{item.participations}}</td>
+                                                <td>{{item.firstAccess | formatDate }}</td>
+                                                <td>{{item.lastAccess | formatDate }}</td>
+                                            </tr>
+                                            <tr style="display: none">
+                                                <td colspan="5">
+                                                    <table id="studentTable">
+                                                            <template v-for="(student, stIndex) in item.students">
+                                                                <tr :class="{ 'student' : true, 'colorGray' : stIndex % 2 == 0}">
+                                                                    <td>{{student.name | capitalize}}</td>
+                                                                    <td>{{student.views}}</td>
+                                                                    <td>{{student.participations}}</td>
+                                                                    <td>{{student.firstAccess | formatDate }}</td>
+                                                                    <td>{{student.lastAccess | formatDate }}</td>
+                                                                </tr>
+                                                            </template>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                </table>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <environment include="Development">
+        <script src="~/lib/jquery/dist/jquery.js"></script>
+        <script src="~/lib/bootstrap/dist/js/bootstrap.js"></script>
+        <script src="~/js/site.js" asp-append-version="true"></script>
+    </environment>
+    <environment exclude="Development">
+        <script src="https://ajax.aspnetcdn.com/ajax/jquery/jquery-3.3.1.min.js"
+                asp-fallback-src="~/lib/jquery/dist/jquery.min.js"
+                asp-fallback-test="window.jQuery"
+                crossorigin="anonymous"
+                integrity="sha384-tsQFqpEReu7ZLhBV2VZlAu7zcOV+rXbYlF2cqB8txI/8aZajjp4Bqd+V6D5IgvKT">
+        </script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"
+                asp-fallback-src="~/lib/bootstrap/dist/js/bootstrap.min.js"
+                asp-fallback-test="window.jQuery && window.jQuery.fn && window.jQuery.fn.modal"
+                crossorigin="anonymous"
+                integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd">
+        </script>
+    </environment>
+    
+<script type="text/javascript" src="~/lib/moment/moment.min.js"></script>
+<script type="text/javascript" src="~/lib/axios/dist/axios.min.js"></script>
+    <script type="text/javascript" src="~/lib/vue/vue.min.js"></script>
+    <script type="text/javascript">
+        var app = new Vue({
+            el: '#courseTable',
+            data: {
+                courseData: [],
+                currentSort: 'name',
+                currentSortDirection: 'asc'
+            },
+            mounted: function() {
+                var courseId = $("#CourseId")[0].value;
+
+                axios.get('/Home/GetCourseData?courseId=' + courseId)
+                    .then((response) => {
+                        this.courseData = response.data;
+                    });
+            },
+            methods: {
+                toggleExpand: function(e) {
+                    let expandIconCell = $(e.target).closest('tr').find('td:first');
+                    if ($(expandIconCell).html().indexOf('+') > 0) {
+                        $(expandIconCell).find('span').html("-");
+                    } else {
+                        $(expandIconCell).find('span').html("+");
+                    }
+
+                    $(e.target).closest('tr').next('tr').toggle('fade');
+                },
+                sort: function(s) {
+                    if (s === this.currentSort) {
+                        this.currentSortDirection = this.currentSortDirection === 'asc' ? 'desc' : 'asc';
+                    }
+                    this.currentSort = s;
+                }
+            },
+            filters: {
+                formatDate: function(value) {
+                    if (!value) return '';
+                    return moment(new Date(value)).add(1, 'days').format('MM/DD/YYYY hh:mm');
+                },
+                capitalize: function(value) {
+                    if (typeof value !== 'string') return '';
+                    return value.charAt(0).toUpperCase() + value.slice(1);
+                }
+            },
+            computed: {
+                sortedCourseData: function () {
+                    var sortedCourseData =  this.courseData.sort((a, b) => {
+                        let modifier = 1;
+                        if (this.currentSortDirection === 'desc') modifier = -1;
+                        if (a[this.currentSort] < b[this.currentSort]) return -1 * modifier;
+                        if (a[this.currentSort] > b[this.currentSort]) return 1 * modifier;
+                        return 0;
+                    });
+
+                    for (let i = 0; i < sortedCourseData.length; ++i) {
+                        sortedCourseData[i].items = sortedCourseData[i].items.sort((a, b) => {
+                            let modifier = 1;
+                            if (this.currentSortDirection === 'desc') modifier = -1;
+
+                            let aValue = '';
+                            let bValue = '';
+                            if (typeof (a[this.currentSort]) == "string") {
+                                aValue = a[this.currentSort].toLowerCase();
+                                bValue = b[this.currentSort].toLowerCase();
+                            } else {
+                                aValue = a[this.currentSort];
+                                bValue = b[this.currentSort];
+                            }
+
+                            if (aValue < bValue) return -1 * modifier;
+                            if (aValue > bValue) return 1 * modifier;
+                            return 0;
+                        });
+                        
+                        for (let j = 0; j < sortedCourseData[i].items.length; ++j) {
+                            sortedCourseData[i].items[j].students = sortedCourseData[i].items[j].students.sort((a, b) => {
+                                let modifier = 1;
+                                if (this.currentSortDirection === 'desc') modifier = -1;
+
+                                let aValue = '';
+                                let bValue = '';
+                                if (typeof (a[this.currentSort]) == "string") {
+                                    aValue = a[this.currentSort].toLowerCase();
+                                    bValue = b[this.currentSort].toLowerCase();
+                                } else {
+                                    aValue = a[this.currentSort];
+                                    bValue = b[this.currentSort];
+                                }
+
+                                if (aValue < bValue) return -1 * modifier;
+                                if (aValue > bValue) return 1 * modifier;
+                                return 0;
+                            });
+                        }
+                    }
+
+                    return sortedCourseData;
+                }
+            }
+        });
+
+
+    </script>
+
+    <script type="text/javascript">
+        function RemoveAllIcons() {
+            $("#nameSortIcon").removeClass("glyphicon glyphicon-arrow-up");
+            $("#nameSortIcon").removeClass("glyphicon glyphicon-arrow-down");
+
+            $("#viewsSortIcon").removeClass("glyphicon glyphicon-arrow-up");
+            $("#viewsSortIcon").removeClass("glyphicon glyphicon-arrow-down");
+
+            $("#participationsSortIcon").removeClass("glyphicon glyphicon-arrow-up");
+            $("#participationsSortIcon").removeClass("glyphicon glyphicon-arrow-down");
+
+            $("#firstAccessSortIcon").removeClass("glyphicon glyphicon-arrow-up");
+            $("#firstAccessSortIcon").removeClass("glyphicon glyphicon-arrow-down");
+
+            $("#lastAccessSortIcon").removeClass("glyphicon glyphicon-arrow-up");
+            $("#lastAccessSortIcon").removeClass("glyphicon glyphicon-arrow-down");
+        }
+    </script>
+</body>
+</html>

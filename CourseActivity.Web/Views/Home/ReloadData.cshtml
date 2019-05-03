@@ -1,0 +1,14 @@
+﻿@model ReloadDataViewModel
+@{
+    ViewData["Title"] = "ReloadData";
+}
+
+<img id="logo" src="~/images/cu-online.png" />
+
+<div id="content">
+    <p>
+        Data for this course has been reset.  To reload, please return to the
+        <a href="@Model.CanvasUrl/courses/@Model.CourseId/users">roster page</a>
+        and run the report again.
+    </p>
+</div>

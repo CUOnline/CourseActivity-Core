@@ -1,0 +1,16 @@
+﻿@model DownloadCsvFailedViewModel
+@{
+    ViewData["Title"] = "Download Csv Failed";
+}
+
+<img id="logo" src="~/images/cu-online.png" />
+
+<div id="content">
+    <h2>Download CSV Failed</h2>
+
+    <p>
+        The specified course does not have uploaded data.  Run a report on the
+        <a href="@Model.CanvasUrl/courses/@Model.CourseId/users">roster page</a>
+        and try again.
+    </p>
+</div>
