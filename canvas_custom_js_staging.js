@@ -25,7 +25,7 @@ $(function () {
 
 $(function () {
     if (window.location.pathname.match(/courses\/\d+\/users/)) {
-        var a = document.createElement("script"), b = document.head || document.getElementsByTagName("head")[0]; a.onload = function () { b.removeChild(a); }; a.src = "https://course-activity.apps.cuonline.edu/js/access-report.js"; b.appendChild(a);
+        var a = document.createElement("script"), b = document.head || document.getElementsByTagName("head")[0]; a.onload = function () { b.removeChild(a); }; a.src = "https://cuo-courseactivity.rsstest.com/js/access-report.js"; b.appendChild(a);
     }
 });
 

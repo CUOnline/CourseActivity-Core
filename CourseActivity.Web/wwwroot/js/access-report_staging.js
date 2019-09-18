@@ -66,9 +66,9 @@
         setupPool();
         var courseId = getCourseId();
 
-        $.get("https://courseactivity.apps.cuonline.edu/Home/CheckData/" + courseId, {}, function (data) {
-            if (data) {
-                window.location = "https://courseactivity.apps.cuonline.edu/Home/course/" + courseId;
+        $.get("https://cuo-courseactivity.rsstest.com/Home/CheckData/" + courseId, {}, function (data) {
+            if (data === 1) {
+                window.location = "https://cuo-courseactivity.rsstest.com/Home/course/" + courseId;
             } else {
                 var url = '/api/v1/courses/' + courseId + '/sections?include[]=students&per_page=100';
                 progressbar();
@@ -202,8 +202,8 @@
             if (csv) {
                 var params = { csvData: csv, courseId: courseId };
 
-                $.post("https://courseactivity.apps.cuonline.edu/Home/Upload", params, function (data) {
-                    window.location = "https://courseactivity.apps.cuonline.edu/Home/Course/" + courseId;
+                $.post("https://course-activity.apps.cuonline.edu/Home/Upload", params, function (data) {
+                    window.location = "https://course-activity.apps.cuonline.edu/Home/Course/" + courseId;
                 });
             } else {
                 throw new Error('Problem creating report');
